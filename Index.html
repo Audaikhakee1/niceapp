@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Core-Pulse Control</title>
+    <title>Core-Pulse Bot Control</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -17,100 +17,93 @@
     <div class="w-full max-w-md">
         <header class="flex justify-between items-center mb-6 p-4 glass rounded-2xl">
             <div>
-                <h1 class="text-xl font-bold text-cyan-400">CORE-PULSE</h1>
-                <p id="status-text" class="text-[10px] text-slate-500 italic">جاري فحص النبض...</p>
+                <h1 class="text-xl font-bold text-cyan-400">CORE-PULSE v2.0</h1>
+                <p id="status-text" class="text-[10px] text-slate-500 italic">نظام التحكم بالبوت</p>
             </div>
-            <div id="status-indicator" class="h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
+            <div id="status-indicator" class="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
         </header>
 
         <div class="grid grid-cols-2 gap-4 mb-6">
-            <div class="glass p-4 rounded-3xl text-center shadow-lg">
+            <div class="glass p-4 rounded-3xl text-center">
                 <span class="text-xs text-slate-500 block mb-1">المعالج</span>
                 <span id="cpu-val" class="text-2xl font-bold text-cyan-400">--%</span>
             </div>
-            <div class="glass p-4 rounded-3xl text-center shadow-lg">
+            <div class="glass p-4 rounded-3xl text-center">
                 <span class="text-xs text-slate-500 block mb-1">الذاكرة</span>
                 <span id="ram-val" class="text-2xl font-bold text-purple-400">--%</span>
             </div>
         </div>
 
-        <div class="glass p-4 rounded-3xl mb-6 shadow-2xl">
-            <h3 class="text-[10px] font-bold text-slate-500 mb-4 text-center tracking-[0.2em]">LIVE MONITORING</h3>
-            <canvas id="pulseChart" height="200"></canvas>
+        <div class="glass p-4 rounded-3xl mb-6">
+            <canvas id="pulseChart" height="180"></canvas>
         </div>
 
-        <button onclick="sendTestCommand()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-2xl transition-all active:scale-95 shadow-lg shadow-cyan-900/40">
-            إرسال نبضة اختبار
+        <button id="bot-btn" onclick="toggleBot()" class="w-full bg-slate-800 border border-slate-700 hover:border-cyan-500 text-white font-bold py-5 rounded-2xl transition-all flex items-center justify-center gap-3 shadow-xl shadow-cyan-900/10">
+            <div id="bot-light" class="h-2 w-2 bg-red-500 rounded-full shadow-[0_0_10px_red]"></div>
+            <span id="bot-text">تشغيل البوت على تلجرام</span>
         </button>
     </div>
 
     <script>
-        // ضع رابط Railway الخاص بك هنا
         const API_BASE = "https://niceapp-production.up.railway.app";
+        let botActive = false;
 
-        // إعداد الرسم البياني
+        // Chart Config
         const ctx = document.getElementById('pulseChart').getContext('2d');
         const pulseChart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: Array(10).fill(''),
                 datasets: [{
-                    label: 'CPU Usage',
                     data: Array(10).fill(0),
                     borderColor: '#22d3ee',
-                    backgroundColor: 'rgba(34, 211, 238, 0.1)',
                     borderWidth: 2,
                     tension: 0.4,
                     fill: true,
-                    pointRadius: 2
+                    backgroundColor: 'rgba(34, 211, 238, 0.05)',
+                    pointRadius: 0
                 }]
             },
-            options: {
-                responsive: true,
-                scales: {
-                    y: { beginAtZero: true, max: 100, grid: { color: '#1e293b' }, ticks: { display: false } },
-                    x: { display: false }
-                },
-                plugins: { legend: { display: false } }
-            }
+            options: { scales: { y: { beginAtZero: true, max: 100, display: false }, x: { display: false } }, plugins: { legend: { display: false } } }
         });
 
-        // جلب البيانات من السيرفر وتحديث الواجهة
-        async function updateHeartbeat() {
+        // Update Stats & UI
+        async function updateUI() {
             try {
-                const response = await fetch(`${API_BASE}/stats`);
-                const data = await response.json();
-                
-                // تحديث النصوص (CPU و RAM)
-                if (data.cpu !== undefined) {
-                    document.getElementById('cpu-val').innerText = data.cpu + "%";
-                    document.getElementById('ram-val').innerText = data.ram + "%";
-                    document.getElementById('status-text').innerText = "متصل بالوحش الرقمي";
-                    document.getElementById('status-indicator').classList.replace('bg-red-500', 'bg-green-500');
-
-                    // تحديث الرسم البياني
-                    pulseChart.data.datasets[0].data.push(data.cpu);
-                    pulseChart.data.datasets[0].data.shift();
-                    pulseChart.update('none');
-                }
-            } catch (err) {
-                document.getElementById('status-text').innerText = "انقطع الاتصال!";
-                document.getElementById('status-indicator').classList.replace('bg-green-500', 'bg-red-500');
-            }
-        }
-
-        async function sendTestCommand() {
-            try {
-                const res = await fetch(`${API_BASE}/deploy?type=Mobile_Pulse`);
+                const res = await fetch(`${API_BASE}/stats`);
                 const data = await res.json();
-                alert("تم الرد: " + data.message);
-            } catch (e) {
-                alert("فشل إرسال النبضة");
-            }
+                document.getElementById('cpu-val').innerText = data.cpu + "%";
+                document.getElementById('ram-val').innerText = data.ram + "%";
+                pulseChart.data.datasets[0].data.push(data.cpu);
+                pulseChart.data.datasets[0].data.shift();
+                pulseChart.update('none');
+            } catch (e) {}
         }
 
-        // تحديث كل ثانيتين
-        setInterval(updateHeartbeat, 2000);
+        async function toggleBot() {
+            try {
+                const res = await fetch(`${API_BASE}/bot/toggle`);
+                const data = await res.json();
+                const btn = document.getElementById('bot-btn');
+                const light = document.getElementById('bot-light');
+                const text = document.getElementById('bot-text');
+
+                if (data.status === "Running") {
+                    btn.classList.add('border-green-500');
+                    light.classList.replace('bg-red-500', 'bg-green-500');
+                    light.style.boxShadow = "0 0 10px #22c55e";
+                    text.innerText = "البوت يعمل الآن";
+                } else {
+                    btn.classList.remove('border-green-500');
+                    light.classList.replace('bg-green-500', 'bg-red-500');
+                    light.style.boxShadow = "0 0 10px red";
+                    text.innerText = "تشغيل البوت على تلجرام";
+                }
+                alert(data.message);
+            } catch (e) { alert("خطأ في الاتصال"); }
+        }
+
+        setInterval(updateUI, 2000);
     </script>
 </body>
 </html>
