@@ -37,22 +37,26 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not update.message or not update.message.text: return
     user_id = update.effective_user.id
     user_text = update.message.text
+    
+    await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
+
     try:
+        # تغيير النموذج لضمان التوافق العالمي
+        model = genai.GenerativeModel('gemini-pro') 
+        
         if user_id not in chats_memory:
-            chats_memory[user_id] = ai_model.start_chat(history=[])
+            chats_memory[user_id] = model.start_chat(history=[])
+        
         chat_session = chats_memory[user_id]
         response = chat_session.send_message(user_text)
+        
         await update.message.reply_text(response.text)
+
     except Exception as e:
-        await update.message.reply_text("عذراً، عقلي يمر بعملية تحديث. سأعود قريباً!")
-
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("مرحباً! الوحش الرقمي يعمل الآن بالذكاء الاصطناعي.")
-
-@app.get("/stats")
-async def get_stats():
-    return {"cpu": random.randint(15, 65), "ram": random.randint(25, 55)}
-
+        # طباعة الخطأ في سجلات السيرفر للفحص
+        print(f"CRITICAL AI ERROR: {str(e)}")
+        # رد بديل ذكي في حال فشل الـ API
+        await update.message.reply_text("عذراً أيها القائد، يبدو أن هناك ضغطاً على قنوات الاتصال العصبية. حاول مجدداً بعد ثوانٍ.")
 @app.get("/bot/toggle")
 async def toggle_bot():
     global application, bot_running
@@ -80,3 +84,4 @@ async def root():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
