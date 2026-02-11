@@ -1,5 +1,5 @@
 # 1. القاعدة (Base Image): تحديد نظام التشغيل واللغة
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # 2. بيئة العمل (Work Directory): إنشاء مجلد داخل السيرفر لوضع الكود
 WORKDIR /app
