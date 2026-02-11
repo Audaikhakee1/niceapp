@@ -3,126 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>غرفة قيادة الوحش الرقمي</title>
+    <title>غرفة قيادة الوحش</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <style>
         @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
-        body { font-family: 'Cairo', sans-serif; }
-        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); }
+        body { font-family: 'Cairo', sans-serif; background-color: #020617; }
+        .glass { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(51, 65, 85, 0.5); }
     </style>
 </head>
-<body class="bg-slate-950 text-white min-h-screen pb-24">
+<body class="text-slate-200 min-h-screen p-4">
 
-    <nav class="p-6 border-b border-slate-800 flex justify-between items-center glass sticky top-0 z-50">
+    <header class="flex justify-between items-center mb-6 p-4 glass rounded-2xl">
         <div>
-            <h1 class="text-xl font-bold bg-gradient-to-l from-cyan-400 to-blue-500 bg-clip-text text-transparent">CORE-PULSE</h1>
-            <p class="text-[10px] text-slate-500 font-mono">ID: TESTBOT-123</p>
+            <h1 class="text-xl font-bold text-cyan-400">CORE-PULSE</h1>
+            <p id="status-text" class="text-[10px] text-slate-500">جاري الاتصال بالسحابة...</p>
         </div>
-        <div id="status-indicator" class="flex items-center gap-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-700">
-            <span class="flex h-2 w-2 bg-yellow-500 rounded-full animate-pulse"></span>
-            <span class="text-xs text-slate-300">جاري الاتصال...</span>
+        <div class="h-3 w-3 bg-green-500 rounded-full animate-pulse"></div>
+    </header>
+
+    <div class="grid grid-cols-2 gap-4 mb-6">
+        <div class="glass p-4 rounded-3xl text-center">
+            <span class="text-xs text-slate-500 block mb-1">المعالج</span>
+            <span id="cpu-val" class="text-2xl font-bold text-cyan-400">0%</span>
         </div>
-    </nav>
-
-    <main class="p-4 space-y-6">
-        
-        <div class="grid grid-cols-2 gap-4">
-            <div class="bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-xl">
-                <i class="fas fa-microchip text-cyan-400 mb-2"></i>
-                <p class="text-slate-500 text-xs">حالة المحرك</p>
-                <h2 id="engine-status" class="text-lg font-bold">نشط</h2>
-            </div>
-            <div class="bg-slate-900 p-4 rounded-3xl border border-slate-800 shadow-xl">
-                <i class="fas fa-shield-alt text-green-400 mb-2"></i>
-                <p class="text-slate-500 text-xs">الأمان الرقمي</p>
-                <h2 class="text-lg font-bold">محصن</h2>
-            </div>
-        </div>
-
-        <section class="space-y-4">
-            <h3 class="text-sm font-bold text-slate-400 px-2 uppercase tracking-widest">أوامر البنية التحتية</h3>
-            
-            <button onclick="executeAction('تجهيز خادم جديد')" class="w-full bg-slate-900 p-5 rounded-3xl border border-slate-800 hover:border-cyan-500 transition-all flex justify-between items-center group">
-                <div class="flex items-center gap-4">
-                    <div class="bg-cyan-500/10 p-3 rounded-2xl text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white transition">
-                        <i class="fas fa-server"></i>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold">إنشاء خادم (Node)</p>
-                        <p class="text-xs text-slate-500">إطلاق وحدة معالجة جديدة</p>
-                    </div>
-                </div>
-                <i class="fas fa-chevron-left text-slate-700"></i>
-            </button>
-
-            <button onclick="executeAction('فحص الثغرات')" class="w-full bg-slate-900 p-5 rounded-3xl border border-slate-800 hover:border-red-500 transition-all flex justify-between items-center group">
-                <div class="flex items-center gap-4">
-                    <div class="bg-red-500/10 p-3 rounded-2xl text-red-400 group-hover:bg-red-500 group-hover:text-white transition">
-                        <i class="fas fa-user-secret"></i>
-                    </div>
-                    <div class="text-right">
-                        <p class="font-bold">اختبار اختراق</p>
-                        <p class="text-xs text-slate-500">فحص منافذ النظام</p>
-                    </div>
-                </div>
-                <i class="fas fa-chevron-left text-slate-700"></i>
-            </button>
-        </section>
-
-    </main>
-
-    <div class="fixed bottom-0 left-0 right-0 p-4 glass border-t border-slate-800">
-        <div class="bg-black/50 p-1 rounded-2xl border border-slate-700 flex gap-2">
-            <input id="cmd-input" type="text" placeholder="اكتب أمراً للوحش..." class="bg-transparent flex-1 px-4 outline-none text-sm py-3">
-            <button onclick="manualCommand()" class="bg-cyan-600 px-6 rounded-xl hover:bg-cyan-500 transition shadow-lg shadow-cyan-900/20">
-                <i class="fas fa-bolt"></i>
-            </button>
+        <div class="glass p-4 rounded-3xl text-center">
+            <span class="text-xs text-slate-500 block mb-1">الذاكرة</span>
+            <span id="ram-val" class="text-2xl font-bold text-purple-400">0%</span>
         </div>
     </div>
 
+    <div class="glass p-4 rounded-3xl mb-6 shadow-2xl shadow-cyan-900/20">
+        <h3 class="text-xs font-bold text-slate-400 mb-4 px-2 uppercase tracking-widest">مراقب النبض الحي</h3>
+        <canvas id="pulseChart" width="400" height="200"></canvas>
+    </div>
+
+    <button onclick="testCommand()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-cyan-900/40">
+        إرسال أمر اختبار للوحش
+    </button>
+
     <script>
-     // استبدل الرابط القديم برابط Railway الجديد الخاص بك
-const API_BASE = "https://niceapp-production.up.railway.app";
-
-// دالة جلب البيانات الحية لتغذية الرسم البياني
-async function fetchPulseData() {
-    try {
-        const response = await fetch(`${API_BASE}/stats`);
-        const data = await response.json();
+        const API_BASE = "https://niceapp-production.up.railway.app";
         
-        // تحديث الرسم البياني بالقيم القادمة من السيرفر
-        updateChart(data.cpu, data.ram); 
-        
-        // تحديث النصوص في الواجهة
-        document.getElementById('cpu-value').innerText = data.cpu + "%";
-        document.getElementById('ram-value').innerText = data.ram + "%";
-    } catch (error) {
-        console.error("فشل في جلب النبض:", error);
-    }
-}
+        // إعداد الرسم البياني
+        const ctx = document.getElementById('pulseChart').getContext('2d');
+        const pulseChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(10).fill(''),
+                datasets: [{
+                    label: 'CPU %',
+                    data: Array(10).fill(0),
+                    borderColor: '#22d3ee',
+                    backgroundColor: 'rgba(34, 211, 238, 0.1)',
+                    borderWidth: 3,
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, max: 100, grid: { color: '#1e293b' }, ticks: { color: '#64748b' } },
+                    x: { display: false }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
 
-// تشغيل الجلب التلقائي كل 3 ثوانٍ
-setInterval(fetchPulseData, 3000); 
+        // دالة جلب البيانات من Railway
+        async function fetchStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const data = await response.json();
+                
+                // تحديث الأرقام
+                document.getElementById('cpu-val').innerText = data.cpu + "%";
+                document.getElementById('ram-val').innerText = data.ram + "%";
+                document.getElementById('status-text').innerText = "متصل بـ Railway";
 
- async function executeAction(actionName) {
-    const url = `https://opposite-lilia-testbot123-7f1433cc.koyeb.app/deploy?type=${encodeURIComponent(actionName)}`;
-    try {
-        const response = await fetch(url); // GET تلقائي
-        const data = await response.json();
-        alert(data.message);
-    } catch (e) {
-        alert("فشل الاتصال: " + e);
-    }
-}
+                // تحديث الرسم البياني
+                pulseChart.data.datasets[0].data.push(data.cpu);
+                pulseChart.data.datasets[0].data.shift();
+                pulseChart.update('none'); // تحديث سريع بدون أنيميشن ثقيل
 
-        function manualCommand() {
-            const val = document.getElementById('cmd-input').value;
-            if(val) executeAction(val);
+            } catch (error) {
+                document.getElementById('status-text').innerText = "خطأ في الاتصال!";
+                console.error("Connection lost", error);
+            }
         }
 
-        checkStatus();
+        async function testCommand() {
+            try {
+                const res = await fetch(`${API_BASE}/deploy?type=Mobile_Test`);
+                const data = await res.json();
+                alert("رد الوحش: " + data.message);
+            } catch (e) {
+                alert("فشل إرسال الأمر");
+            }
+        }
+
+        // تشغيل المحرك كل 2 ثانية
+        setInterval(fetchStats, 2000);
     </script>
 </body>
 </html>
-
