@@ -82,24 +82,28 @@
     </div>
 
     <script>
-        const API_BASE = "https://opposite-lilia-testbot123-7f1433cc.koyeb.app";
+     // استبدل الرابط القديم برابط Railway الجديد الخاص بك
+const API_BASE = "https://niceapp-production.up.railway.app";
 
-        // التحقق من حالة الاتصال عند التشغيل
-        async function checkStatus() {
-            try {
-                const res = await fetch(API_BASE + "/");
-                const data = await res.json();
-                document.getElementById('status-indicator').innerHTML = `
-                    <span class="flex h-2 w-2 bg-green-500 rounded-full"></span>
-                    <span class="text-xs text-green-400">متصل بالعقل</span>
-                `;
-            } catch (e) {
-                document.getElementById('status-indicator').innerHTML = `
-                    <span class="flex h-2 w-2 bg-red-500 rounded-full"></span>
-                    <span class="text-xs text-red-400">انقطع الاتصال</span>
-                `;
-            }
-        }
+// دالة جلب البيانات الحية لتغذية الرسم البياني
+async function fetchPulseData() {
+    try {
+        const response = await fetch(`${API_BASE}/stats`);
+        const data = await response.json();
+        
+        // تحديث الرسم البياني بالقيم القادمة من السيرفر
+        updateChart(data.cpu, data.ram); 
+        
+        // تحديث النصوص في الواجهة
+        document.getElementById('cpu-value').innerText = data.cpu + "%";
+        document.getElementById('ram-value').innerText = data.ram + "%";
+    } catch (error) {
+        console.error("فشل في جلب النبض:", error);
+    }
+}
+
+// تشغيل الجلب التلقائي كل 3 ثوانٍ
+setInterval(fetchPulseData, 3000); 
 
  async function executeAction(actionName) {
     const url = `https://opposite-lilia-testbot123-7f1433cc.koyeb.app/deploy?type=${encodeURIComponent(actionName)}`;
@@ -121,3 +125,4 @@
     </script>
 </body>
 </html>
+
