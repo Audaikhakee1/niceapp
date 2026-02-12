@@ -19,8 +19,8 @@ GEMINI_API_KEY = "AIzaSyA9OpSJAz2nE7dBc7DylYz6_LHId-u28ck"
 genai.configure(api_key=GEMINI_API_KEY)
 
 def get_ai_response(prompt):
-    # استخدام المسمى الأكثر شمولية وتوافقاً مع نسخة v1beta
-    model = genai.GenerativeModel('gemini-1.5-flash') # أو جرب 'gemini-pro' إذا فشل هذا
+    # استخدام المسمى الخام الأحدث الذي يدعم كافة النسخ
+    model = genai.GenerativeModel('models/gemini-1.5-flash-latest') 
     response = model.generate_content(prompt)
     return response.text
 
@@ -74,4 +74,5 @@ async def toggle_bot():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
 
