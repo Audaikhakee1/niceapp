@@ -11,14 +11,14 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 app = FastAPI()
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
-# --- البيانات السرية ---
+# --- بيانات القائد والوصول ---
 TELEGRAM_TOKEN = "8123154181:AAEZinaf1XcMDyuXgebGJeC0NoHsw-a7yIs"
 GEMINI_API_KEY = "AIzaSyA9OpSJAz2nE7dBc7DylYz6_LHId-u28ck"
+ADMIN_ID = 7955469863  # تم تثبيت هويتك هنا
 
 async def ask_gemini(prompt):
-    """محرك الاستعلام المباشر - يتجاوز تعقيدات المكتبات"""
-    # جربنا v1beta و v1 وفشلا، الآن سنستخدم الرابط العالمي المباشر
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={GEMINI_API_KEY}"
+    # محاولة استخدام الرابط المستقر مع نسخة v1
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     
     payload = {"contents": [{"parts": [{"text": prompt}]}]}
     
@@ -27,51 +27,44 @@ async def ask_gemini(prompt):
             response = await client.post(url, json=payload, timeout=25.0)
             data = response.json()
             
-            # فحص النجاح
             if response.status_code == 200 and 'candidates' in data:
                 return data['candidates'][0]['content']['parts'][0]['text']
             
-            # فحص نوع الخطأ بدقة هندسية
-            error_status = data.get('error', {}).get('status', 'Unknown')
-            error_message = data.get('error', {}).get('message', 'No message')
+            # فحص الخطأ الجغرافي
+            error_msg = data.get('error', {}).get('message', '')
+            if "location" in error_msg.lower():
+                return "🚨 جوجل تحظر منطقة السيرفر حالياً. القائد، نحتاج لتفعيل بروكسي أو تغيير المنطقة لـ US-Central."
             
-            if "LOCATION" in error_message or "supported" in error_message:
-                return "⚠️ الوحش يعمل، لكن جوجل تحظر منطقة السيرفر (Railway Region). سأقوم بتفعيل نظام البروكسي لاحقاً."
-            
-            return f"❌ خطأ تقني ({error_status}): {error_message[:50]}"
-            
+            return f"❌ رد النظام: {error_msg[:50]}"
         except Exception as e:
-            return f"⚙️ عطل في نظام الاتصال: {str(e)[:30]}"
-
-# --- منطق البوت والواجهة ---
-bot_running = False
-application = None
+            return f"⚙️ عطل اتصال: {str(e)[:30]}"
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not update.message or not update.message.text: return
+    # الحارس الشخصي: التحقق من الهوية
+    if update.effective_user.id != ADMIN_ID:
+        # البوت لن يرد حتى، سيتجاهل المتطفل تماماً لزيادة الأمان
+        print(f"🚫 منع متطفل يحمل ID: {update.effective_user.id}")
+        return
+
     await context.bot.send_chat_action(chat_id=update.effective_chat.id, action="typing")
-    
-    # تنفيذ الاستعلام
     reply = await ask_gemini(update.message.text)
     await update.message.reply_text(reply)
 
 @app.get("/stats")
 async def get_stats():
-    return {"cpu": random.randint(10, 60), "ram": random.randint(20, 50)}
+    return {"cpu": random.randint(10, 40), "ram": random.randint(15, 35)}
 
 @app.get("/bot/toggle")
 async def toggle_bot():
     global application, bot_running
-    if not bot_running:
-        application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
-        application.add_handler(CommandHandler("start", lambda u, c: u.message.reply_text("الوحش الرقمي جاهز للخدمة، أرسل رسالتك.")))
-        application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
-        await application.initialize()
-        await application.start()
-        await application.updater.start_polling()
-        bot_running = True
-        return {"status": "Running"}
-    return {"status": "Online"}
+    # نظام التشغيل الآمن
+    application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
+    application.add_handler(CommandHandler("start", lambda u, c: u.message.reply_text("الوحش استيقظ. بانتظار أوامرك أيها القائد.") if u.effective_user.id == ADMIN_ID else None))
+    application.add_handler(MessageHandler(filters.TEXT & (~filters.COMMAND), handle_message))
+    await application.initialize()
+    await application.start()
+    await application.updater.start_polling()
+    return {"status": "Locked & Running", "commander_id": ADMIN_ID}
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
