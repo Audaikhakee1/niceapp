@@ -16,23 +16,28 @@ TELEGRAM_TOKEN = "8123154181:AAEZinaf1XcMDyuXgebGJeC0NoHsw-a7yIs"
 GEMINI_API_KEY = "AIzaSyA9OpSJAz2nE7dBc7DylYz6_LHId-u28ck"
 
 async def get_ai_response_direct(prompt):
-    # رابط الاتصال المباشر بـ Google Gemini API
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    # الانتقال إلى النسخة المستقرة v1 بدلاً من v1beta
+    # واستخدام المسمى الكامل الرسمي للنموذج
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     
     payload = {
         "contents": [{"parts": [{"text": prompt}]}]
     }
     
     async with httpx.AsyncClient() as client:
-        response = await client.post(url, json=payload, timeout=30.0)
-        result = response.json()
-        
-        # استخراج النص من الرد الخام
         try:
-            return result['candidates'][0]['content']['parts'][0]['text']
-        except Exception:
-            return f"عذراً أيها القائد، جوجل ردت بـ: {result.get('error', {}).get('message', 'خطأ غير معروف')}"
-
+            response = await client.post(url, json=payload, timeout=30.0)
+            result = response.json()
+            
+            # فحص الرد وتوجيهه
+            if 'candidates' in result:
+                return result['candidates'][0]['content']['parts'][0]['text']
+            elif 'error' in result:
+                return f"⚠️ تنبيه من جوجل: {result['error']['message']}"
+            else:
+                return "🔄 النظام استلم البيانات ولكن الرد غامض. حاول ثانية."
+        except Exception as e:
+            return f"❌ خطأ في الاتصال: {str(e)}"
 bot_running = False
 application = None
 
@@ -66,3 +71,4 @@ async def toggle_bot():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)
+
